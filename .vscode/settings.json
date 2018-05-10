@@ -1,0 +1,26 @@
+{
+    "files.associations": {
+        "chrono": "cpp",
+        "cctype": "cpp",
+        "cmath": "cpp",
+        "cstdarg": "cpp",
+        "cstddef": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "cstring": "cpp",
+        "ctime": "cpp",
+        "cwchar": "cpp",
+        "atomic": "cpp",
+        "cstdint": "cpp",
+        "exception": "cpp",
+        "slist": "cpp",
+        "initializer_list": "cpp",
+        "iosfwd": "cpp",
+        "limits": "cpp",
+        "ratio": "cpp",
+        "type_traits": "cpp",
+        "typeinfo": "cpp",
+        "__config": "cpp",
+        "algorithm": "cpp"
+    }
+}

@@ -6,27 +6,31 @@
 
 namespace Scheduler
 {
-Roulette::Roulette(std::vector<std::shared_ptr<AntPath>> &paths, double alpha)
+Roulette::Roulette(std::vector<double> &scores, double alpha)
 {
     alpha_ = alpha;
-    roulette_.resize(paths.size());
-    update_roulette(paths);
+    roulette_.resize(scores.size());
+    update_roulette(scores);
 }
-void Roulette::update_roulette(std::vector<std::shared_ptr<AntPath>> &paths)
+void Roulette::update_roulette(std::vector<double> &scores)
 {
-    uint32_t best_score = max_score;
-    for (std::shared_ptr<AntPath> path : paths)
+    
+    double best_score = 0;
+    for (double score : scores)
     {
-        path->update_score();
-        best_score = std::min(best_score, path->score);
+        best_score = std::max(best_score, score);
     }
 
     double sum = 0;
     int i = 0;
-    for (std::shared_ptr<AntPath> path : paths)
+    for (double score : scores)
     {
-        uint32_t current_score = std::min(path->score, best_score + 10);
-        uint32_t diff = current_score - best_score;
+        if(std::isnan(score)){
+            roulette_[i] = 0;
+            i++;
+            continue;
+        }
+        uint32_t diff = best_score - score;
         assert(diff >= 0);
         roulette_[i] = exp(-(alpha_ * diff));
         sum += roulette_[i];
@@ -39,12 +43,13 @@ void Roulette::update_roulette(std::vector<std::shared_ptr<AntPath>> &paths)
     {
         roulette_[i] = roulette_[i - 1] + roulette_[i] / sum;
     }
+    roulette_[roulette_.size()-1] = 1;
 }
 
 int32_t Roulette::spin_roulette()
 {
     double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-    int32_t index = roulette_.size();
+    int32_t index = (roulette_.size()-1)/2;
     int32_t step = index;
     while (true)
     {

@@ -18,10 +18,10 @@ int main(int argc, char *argv[])
     }
     auto p0 = std::chrono::system_clock::now();
     Scheduler::AntColonySchedulerCore scheduler(p_reader->getNodes(), config_ptr);
-    scheduler.run();
+    //scheduler.run();
     auto p1 = std::chrono::system_clock::now();
     auto diff1 = p1 - p0;
-    std::cout << "time:" << std::chrono::duration_cast<std::chrono::milliseconds>(diff1).count() << " millisec.  "
-              << "best: " << scheduler.getBest() << std::endl;
+    //std::cout << "time:" << std::chrono::duration_cast<std::chrono::milliseconds>(diff1).count() << " millisec.  "
+    //          << "best: " << scheduler.getBest() << std::endl;
 
 }

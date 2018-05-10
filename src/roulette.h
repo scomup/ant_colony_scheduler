@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "node.h"
-#include "AntPath.h"
+#include "AntTrail.h"
 
 namespace Scheduler
 {
@@ -12,9 +12,9 @@ namespace Scheduler
 class Roulette
 {
   public:
-    Roulette(std::vector<std::shared_ptr<AntPath>> &path, double alpha);
+    Roulette(std::vector<double> &scores, double alpha);
     int32_t spin_roulette();
-    void update_roulette(std::vector<std::shared_ptr<AntPath>> &paths);
+    void update_roulette(std::vector<double> &scores);
 
 
   private:
