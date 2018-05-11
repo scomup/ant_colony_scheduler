@@ -19,32 +19,27 @@ namespace Scheduler
 class AntTrail : public std::enable_shared_from_this<AntTrail>
 {
   public:
-    AntTrail(int16_t current_task_id) : current_task_id_(current_task_id)
+    AntTrail(std::vector<Node> &nodes) : current_task_id_(0)
     {
-        task_sequence_.push_back(current_task_id);
-        used_tasks_.insert(current_task_id);
-        
-        /*
-        prevPath_ = prevPath;
-        if (prevPath != nullptr)
-            std::copy(prevPath->task_sequence_.begin(),
-                      prevPath->task_sequence_.end(),
-                      back_inserter(task_sequence_));
-        task_sequence_.push_back(taskID);
-        scores_.push_back(max_score);
-        */
+        task_sequence_.push_back(0);
+        used_tasks_.insert(0);
+        update_schedulable_tasks(nodes);
     };
 
-
-
     int16_t current_task_id_;
-    //std::shared_ptr<AntTrail> prevPath_;
-    //std::vector<std::shared_ptr<AntTrail>> nextPath_;
-    //std::vector<uint32_t> scores_;
-    //uint32_t score;
     std::vector<int16_t> task_sequence_;
     std::unordered_set<int16_t> used_tasks_;
     std::unordered_set<int16_t> schedulable_tasks_;
+    int32_t scheduling_length_;
+
+    int32_t get_scheduling_length(){return scheduling_length_;}
+    std::vector<int16_t>& get_task_sequence(){return task_sequence_;}
+    void set_scheduling_length(int32_t l){scheduling_length_ = l;}
+    
+    bool is_schedulable(int16_t id){
+        return schedulable_tasks_.find(id) != schedulable_tasks_.end();
+    }
+
 
     void update_schedulable_tasks(std::vector<Node> &nodes)
     {
@@ -65,6 +60,14 @@ class AntTrail : public std::enable_shared_from_this<AntTrail>
             if (schedulable_falg)
                 schedulable_tasks_.insert(id);
         }
+    }
+
+    void go_next_state(std::vector<Node> &nodes, int16_t next_id)
+    {
+        current_task_id_ = next_id;
+        task_sequence_.push_back(next_id);
+        used_tasks_.insert(next_id);
+        update_schedulable_tasks(nodes);
     }
 
     //std::unique_ptr<Roulette> roulette_;

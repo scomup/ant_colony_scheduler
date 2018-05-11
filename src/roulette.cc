@@ -10,6 +10,7 @@ Roulette::Roulette(std::vector<double> &scores, double alpha)
 {
     alpha_ = alpha;
     roulette_.resize(scores.size());
+    prob_.resize(scores.size());
     update_roulette(scores);
 }
 void Roulette::update_roulette(std::vector<double> &scores)
@@ -20,6 +21,8 @@ void Roulette::update_roulette(std::vector<double> &scores)
     {
         best_score = std::max(best_score, score);
     }
+    //if(best_score==0)
+    //    return;
 
     double sum = 0;
     int i = 0;
@@ -30,18 +33,26 @@ void Roulette::update_roulette(std::vector<double> &scores)
             i++;
             continue;
         }
-        uint32_t diff = best_score - score;
-        assert(diff >= 0);
-        roulette_[i] = exp(-(alpha_ * diff));
-        sum += roulette_[i];
+        if(best_score == 0 || score<1.)
+            score = 1.;
+        //uint32_t diff = best_score - score;
+        //assert(diff >= 0);
+        //roulette_[i] = exp(-(alpha_ * diff));
+        prob_[i] = score;
+        sum += prob_[i];
         i++;
     }
-
     assert(sum != 0);
-    roulette_[0] = roulette_[0] / sum;
+/*
     for (size_t i = 1; i < roulette_.size(); i++)
     {
-        roulette_[i] = roulette_[i - 1] + roulette_[i] / sum;
+        prob_[i] = prob_[i] / sum;
+    }*/
+
+    roulette_[0] = prob_[0]/sum;
+    for (size_t i = 1; i < roulette_.size(); i++)
+    {
+        roulette_[i] = roulette_[i - 1] + prob_[i]/sum;
     }
     roulette_[roulette_.size()-1] = 1;
 }

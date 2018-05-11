@@ -12,25 +12,9 @@ AntColonySchedulerCore::AntColonySchedulerCore(std::vector<Node> nodes, Schedule
     : nodes_(nodes), config_ptr_(config_ptr)
 {
     ant_routing_table_.resize( nodes_.size() , std::vector<double>( nodes_.size() , 0 ) );
+    cont_.resize(nodes_.size() , 0);
     init_ant_table();
-    home_ = std::make_shared<AntTrail>(0);
-    home_->update_schedulable_tasks(nodes_);
-    //update_roulettes();
-    Roulette r = Roulette(ant_routing_table_[50],1.);
-    int i = 0;
-    for (size_t j = 0; j < ant_routing_table_[50].size(); ++j)
-    {
-        std::cout << std::setw(3) << ant_routing_table_[50][j] << " ";
-    }
-    std::cout << "\n";
-    std::vector<int> count(52, 0);
-    while (i++ < 100000)
-        count[r.spin_roulette()]++;
-
-    for (size_t j = 0; j < count.size(); ++j)
-    {
-        std::cout << j << ":" << count[j] << "\n";
-    }
+    update_roulettes();
 };
 
 void AntColonySchedulerCore::add_flag(int16_t a, int16_t b)
@@ -53,91 +37,115 @@ void AntColonySchedulerCore::init_ant_table()
     for (size_t i = 0; i < ant_routing_table_.size(); ++i)
     {
         add_flag(i, i);
-    }
-    
-    //for (size_t i = 0; i < ant_routing_table_.size(); ++i)
-    //{
-    //    std::cout <<std::setw(2)<<i;
-    //    for (size_t j = 0; j < ant_routing_table_[i].size(); ++j)
-    //    {
-    //        std::cout <<std::setw(3)<< ant_routing_table_[i][j] << " ";
-    //    }
-    //    std::cout << "\n";
-    //}
-    
+    }    
 }
 
 void AntColonySchedulerCore::run()
 {
-    /*
-    home_ = std::make_shared<AntTrail>(0);
 
     for (uint32_t loop = 0; loop < config_ptr_->max_loop; loop++)
     {
+        trails_.clear();
         for (size_t i = 0; i < config_ptr_->max_chromosome_num; i++)
         {
-            auto trail = explore();
-            trails_.push_back(trail);
+            auto ant = std::make_shared<AntTrail>(nodes_);
+            ant_explore(ant);
+            trails_.push_back(ant);
         }
         update_pheromone();
-        std::cout<<home_->update_score()<<std::endl;
-    }*/
+        update_roulettes();
+        std::fill (cont_.begin(),cont_.end(),0);
+        std::cout<<"loop"<<loop<<std::endl;
+    }
 }
 
-void AntColonySchedulerCore::update_roulettes(){
-    return;
-
+void AntColonySchedulerCore::update_roulettes()
+{
+    if (roulettes_.size() == 0)
+    {
+        for (size_t i = 0; i<ant_routing_table_.size()-1;i++)
+        {
+            roulettes_.emplace_back(Roulette(ant_routing_table_[i], .1));
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i<ant_routing_table_.size()-1;i++)
+        {
+            roulettes_[i].update_roulette(ant_routing_table_[i]);
+        }
+    }
 }
 
 void AntColonySchedulerCore::ant_explore(std::shared_ptr<AntTrail> ant)
 {
-
-    //ant.
-    /*
-    auto trail = home_;
-    while ((uint32_t)trail->taskID_ != nodes_.size() - 1)
+    while ((uint32_t)ant->current_task_id_ != nodes_.size() - 1)
     {
-        if (trail->nextPath_.size() == 0)
-        {
-            trail->create_next_trail(nodes_, config_ptr_->alpha);
+        int16_t next_id;
+        do{
+            next_id = roulettes_[ant->current_task_id_].spin_roulette();
         }
-        int idx = trail->roulette_->spin_roulette();
-        trail = trail->nextPath_[idx];
+        while(!ant->is_schedulable(next_id));
+        if(ant->current_task_id_ == 0)
+            cont_[next_id]++;
+        ant->go_next_state(nodes_, next_id);
     }
-    return trail;
-    */
-
+    int16_t scheduling_length = evaluate(ant->get_task_sequence());
+    ant->set_scheduling_length(scheduling_length);
 }
 
 void AntColonySchedulerCore::update_pheromone()
 {
-    /*
+    int16_t best = 10000;
     for (std::shared_ptr<AntTrail> trail : trails_)
-    {
-        uint32_t scheduling_length = evaluate(trail->task_sequence);
-        while (true)
-        {
-            trail->scores_[0] = std::min(trail->scores_[0], scheduling_length);
-            if(trail->prevPath_ == nullptr)
-                break;
-            trail = trail->prevPath_;
-        }
+    {   
+        int16_t l = trail->get_scheduling_length();
+        best = std::min(l,best);
     }
 
+    
     for (std::shared_ptr<AntTrail> trail : trails_)
-    {
-        while (trail->scores_[0] != max_score)
-        {
-            trail->scores_.insert(trail->scores_.begin(),max_score);
-            if(trail->nextPath_.size() != 0)
-                trail->roulette_->update_roulette(trail->nextPath_);
-            if(trail->prevPath_ == nullptr)
-                break;
-            trail = trail->prevPath_; 
-        }
-    }*/
-}
+    {   
+        int16_t l = trail->get_scheduling_length();
+        double pheromone = exp(-config_ptr_->alpha*(l-best))*10;
 
+
+        for (size_t i = 1; i < trail->get_task_sequence().size(); i++)
+        {
+            int16_t id_a = trail->get_task_sequence()[i - 1];
+            int16_t id_b = trail->get_task_sequence()[i];
+            
+            ant_routing_table_[id_a][id_b] += pheromone;
+        }
+    }
+    bk_ant_routing_table_.push_back(ant_routing_table_);
+    if (bk_ant_routing_table_.size() > 10)
+    {
+        for (size_t i = 0; i < ant_routing_table_.size(); ++i)
+        {
+            for (size_t j = 0; j < ant_routing_table_[i].size(); ++j)
+            {
+                ant_routing_table_[i][j] -= bk_ant_routing_table_.front()[i][j];
+            }
+        }
+        bk_ant_routing_table_.pop_front();
+    }
+
+    std::cout << best << "\n";
+    /*
+    for (size_t i = 0; i < ant_routing_table_.size(); ++i)
+    {
+        std::cout <<std::setw(2)<<i;
+        for (size_t j = 0; j < ant_routing_table_[i].size(); ++j)
+        {
+            std::cout <<std::fixed << std::setw(3) << std::setprecision( 1 ) << std::setfill('0') << ant_routing_table_[i][j] << " ";
+        }
+        std::cout << "\n";
+    }
+    getchar();
+    */
+
+}
 
 //-----------------------------------------------------------------------------
 //This funciton try to assembly of the scheduling result according to the genetic information.

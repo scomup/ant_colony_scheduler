@@ -5,6 +5,8 @@
 #include <limits>
 #include <chrono>
 #include <memory>
+#include <list>
+
 #include "boost/multi_array.hpp"
 
 #include "common/make_unique.h"
@@ -43,8 +45,10 @@ private:
   std::shared_ptr<AntTrail> home_;
   std::vector<std::shared_ptr<AntTrail>> trails_;
   std::vector<std::vector<double>> ant_routing_table_;
+  std::list<std::vector<std::vector<double>>> bk_ant_routing_table_;
   //boost::multi_array<double, 2> ant_routing_table_;
   std::vector<Roulette> roulettes_;
+  std::vector<int> cont_;
 
 };
 

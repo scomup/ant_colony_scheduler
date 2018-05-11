@@ -18,6 +18,7 @@ class Roulette
 
 
   private:
+    std::vector<double> prob_;
     std::vector<double> roulette_;
     double alpha_;
 
