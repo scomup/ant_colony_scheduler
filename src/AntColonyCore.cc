@@ -15,6 +15,7 @@ AntColonySchedulerCore::AntColonySchedulerCore(std::vector<Node> nodes, Schedule
     cont_.resize(nodes_.size() , 0);
     init_ant_table();
     update_roulettes();
+    global_best_ = 10000;
 };
 
 void AntColonySchedulerCore::add_flag(int16_t a, int16_t b)
@@ -50,12 +51,15 @@ void AntColonySchedulerCore::run()
         {
             auto ant = std::make_shared<AntTrail>(nodes_);
             ant_explore(ant);
+            //std::cout<<(*ant);
             trails_.push_back(ant);
         }
         update_pheromone();
         update_roulettes();
+        pheromone_evaporation();
         std::fill (cont_.begin(),cont_.end(),0);
-        std::cout<<"loop"<<loop<<std::endl;
+        if(config_ptr_->show_step_info)
+            std::cout<<"loop:"<<loop<<std::endl;
     }
 }
 
@@ -94,31 +98,45 @@ void AntColonySchedulerCore::ant_explore(std::shared_ptr<AntTrail> ant)
     ant->set_scheduling_length(scheduling_length);
 }
 
+void AntColonySchedulerCore::pheromone_evaporation()
+{
+    for (size_t i = 0; i < ant_routing_table_.size(); ++i)
+    {
+        for (size_t j = 0; j < ant_routing_table_[i].size(); ++j)
+        {
+            ant_routing_table_[i][j] *= config_ptr_->evaporation_rate;
+        }
+    }
+}
+
 void AntColonySchedulerCore::update_pheromone()
 {
-    int16_t best = 10000;
+    int16_t best =10000;
     for (std::shared_ptr<AntTrail> trail : trails_)
     {   
         int16_t l = trail->get_scheduling_length();
         best = std::min(l,best);
     }
+    global_best_ = std::min(global_best_,best);
 
     
     for (std::shared_ptr<AntTrail> trail : trails_)
     {   
+        int tmp = 100;
         int16_t l = trail->get_scheduling_length();
-        double pheromone = exp(-config_ptr_->alpha*(l-best))*10;
-
-
+        double pheromone = exp(-config_ptr_->alpha*(l-best))*tmp;
         for (size_t i = 1; i < trail->get_task_sequence().size(); i++)
         {
             int16_t id_a = trail->get_task_sequence()[i - 1];
             int16_t id_b = trail->get_task_sequence()[i];
             
             ant_routing_table_[id_a][id_b] += pheromone;
+            if(ant_routing_table_[id_a][id_b]>=tmp)
+            ant_routing_table_[id_a][id_b]=tmp;
         }
     }
-    bk_ant_routing_table_.push_back(ant_routing_table_);
+    //bk_ant_routing_table_.push_back(ant_routing_table_);
+    /*
     if (bk_ant_routing_table_.size() > 10)
     {
         for (size_t i = 0; i < ant_routing_table_.size(); ++i)
@@ -129,9 +147,9 @@ void AntColonySchedulerCore::update_pheromone()
             }
         }
         bk_ant_routing_table_.pop_front();
-    }
-
-    std::cout << best << "\n";
+    }*/
+    if(config_ptr_->show_step_info)
+        std::cout << global_best_<<":"<<best << "\n";
     /*
     for (size_t i = 0; i < ant_routing_table_.size(); ++i)
     {

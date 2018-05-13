@@ -6,6 +6,10 @@
 #include <chrono>
 #include <memory>
 #include <unordered_set>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+
 
 #include "common/make_unique.h"
 #include "common/common.h"
@@ -106,6 +110,16 @@ class AntTrail : public std::enable_shared_from_this<AntTrail>
     }
     */
 
+    friend std::ostream &operator<<(std::ostream &os, const AntTrail &ant)
+    {
+        for (int16_t id : ant.task_sequence_)
+        {
+            //os << id <<std::setfill('0')<<std::setw(2)<< " ";
+            os << std::setw(3) << std::left << id ;
+        }
+        os <<" ("<<ant.scheduling_length_<<")"<<std::endl;
+        return os;
+    }
 
   private:
     bool find(std::vector<int16_t> &v, int16_t d)

@@ -28,12 +28,14 @@ public:
   void run();
   void ant_explore(std::shared_ptr<AntTrail> ant);
 
-  //uint32_t getBest() { return home_->update_score(config_ptr_->max_loop); };
+  int16_t getBest() { return global_best_; };
 
 private:
   int16_t evaluate(std::vector<int16_t> &task_sequence);
   void update_pheromone();
   void update_roulettes();
+  void pheromone_evaporation();
+
   
   void init_ant_table();
   void add_flag(int16_t i, int16_t j);
@@ -45,8 +47,8 @@ private:
   std::shared_ptr<AntTrail> home_;
   std::vector<std::shared_ptr<AntTrail>> trails_;
   std::vector<std::vector<double>> ant_routing_table_;
-  std::list<std::vector<std::vector<double>>> bk_ant_routing_table_;
-  //boost::multi_array<double, 2> ant_routing_table_;
+  //std::list<std::vector<std::vector<double>>> bk_ant_routing_table_;
+  int16_t  global_best_;
   std::vector<Roulette> roulettes_;
   std::vector<int> cont_;
 

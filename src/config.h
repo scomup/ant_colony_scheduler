@@ -19,7 +19,7 @@ class Config
     uint32_t all_core_num;
     uint32_t max_chromosome_num;
     float alpha;
-    float mutation_rate;
+    float evaporation_rate;
     uint32_t max_loop;
     bool use_crossover;
     bool show_step_info;  

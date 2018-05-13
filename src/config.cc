@@ -58,9 +58,9 @@ namespace Scheduler
                     {
                         alpha = atof(val.c_str()); 
                     }
-                    else if (id == "mutation_rate")
+                    else if (id == "evaporation_rate")
                     {
-                        mutation_rate = atof(val.c_str());  
+                        evaporation_rate = atof(val.c_str());  
                     }
                     else if (id == "max_loop")
                     {
